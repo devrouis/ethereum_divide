@@ -1,18 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import DashboardActions from './DashboardActions';
-import Experience from './Experience';
-import Education from './Education';
-import { getCurrentProfile, deleteAccount } from '../../actions/profile';
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from 'react-router-dom';
 
-const Dashboard = ({ getCurrentProfile, deleteAccount, auth: { user }, profile: { profile }}) => {
-  useEffect(() => {
-    getCurrentProfile();
-  }, [getCurrentProfile]);
-  
+import { getContacts, createContact } from '../../actions/contact';
+
+const Dashboard = () => {
+  const dispatch = useDispatch();
+  const contacts = useSelector(state => state.contact.contacts)
   const [data, setData] = useState([]);
+  
+  useEffect(() => {
+    dispatch(getContacts());
+  }, []);
+
+  useEffect(() => {
+    if(contacts !== null)
+      setData(contacts);
+  }, [contacts])
+
+  const navigate = useNavigate();
+  
 
   const AddClick = () => {
       setData([...data, {address:'', value:''}]);
@@ -26,8 +33,10 @@ const Dashboard = ({ getCurrentProfile, deleteAccount, auth: { user }, profile: 
 
     if(total > 100 || total < 1 )
       alert('Danger! Total Value should be less than 100', '');
-    else
-      alert('Success! Success');
+    else {
+      let tmp = [...data];
+      dispatch(createContact({data: data}, navigate));
+    }
   }
   const DelClick = (index) => {
     let tmp = [...data];
@@ -47,11 +56,9 @@ const Dashboard = ({ getCurrentProfile, deleteAccount, auth: { user }, profile: 
     setData(tmp)
   }
 
-  
-
   const todosList = data.map((item, index) => (
     <div className="row justify-content-between align-items-center mb-2" key={index}>
-      <input name="address" type="text" className="form-control col-md-8" onChange={(e)=>handleAddressChange(index, e.target.value)} />
+      <input name="address" type="text" className="form-control col-md-8" value={item.address} onChange={(e)=>handleAddressChange(index, e.target.value)} />
       <div className="d-flex">
       <input name="value" type="number" className="form-control" min="1" max="100" value={item.value} onChange={(e)=>handleValueChange(index, e.target.value)} />
         <div className="input-group-append">
@@ -106,18 +113,4 @@ const Dashboard = ({ getCurrentProfile, deleteAccount, auth: { user }, profile: 
   );
 };
 
-Dashboard.propTypes = {
-  getCurrentProfile: PropTypes.func.isRequired,
-  deleteAccount: PropTypes.func.isRequired,
-  auth: PropTypes.object.isRequired,
-  profile: PropTypes.object.isRequired
-};
-
-const mapStateToProps = (state) => ({
-  auth: state.auth,
-  profile: state.profile
-});
-
-export default connect(mapStateToProps, { getCurrentProfile, deleteAccount })(
-  Dashboard
-);
+export default Dashboard;
