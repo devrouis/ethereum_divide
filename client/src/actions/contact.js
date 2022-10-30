@@ -26,7 +26,7 @@ export const getContacts = () => async (dispatch) => {
   } catch (err) {
     dispatch({
       type: CONTACT_ERROR,
-      payload: { msg: err.response.statusText, status: err.response.status }
+      payload: { msg: err.response, status: err.response}
     });
   }
 };

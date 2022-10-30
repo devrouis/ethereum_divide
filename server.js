@@ -18,6 +18,9 @@ app.use('/api/posts', require('./routes/api/posts'));
 app.use('/api/contact', require('./routes/api/contacts'));
 
 // Serve static assets in production
+// process.env.NODE_ENV = 'production';
+// process.env.PORT = '80';
+
 if (process.env.NODE_ENV === 'production') {
   // Set static folder
   app.use(express.static('client/build'));

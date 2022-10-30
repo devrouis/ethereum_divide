@@ -3,15 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@web3-react/core": "^6.1.9",
+    "@web3-react/injected-connector": "^6.0.7",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "react-notifications": "^1.7.4",
     "react-redux": "^7.2.6",
     "react-router-dom": "^6.0.2",
     "react-scripts": "4.0.3",
     "redux": "^4.1.2",
     "redux-devtools-extension": "^2.13.9",
     "redux-thunk": "^2.4.0",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "web3": "^1.8.0"
   },
   "scripts": {
     "start": "react-scripts start",

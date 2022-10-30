@@ -1,13 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from 'react-router-dom';
+import { useWeb3React } from "@web3-react/core";
+import { InjectedConnector } from "@web3-react/injected-connector";
+
+import {  NotificationContainer, NotificationManager } from "react-notifications";
+import "react-notifications/dist/react-notifications.css";
 
 import { getContacts, createContact } from '../../actions/contact';
+
+const ENVIRONMENT = process.env.REACT_APP_ENVIRONMENT;
+const MINT_PRICE = process.env.REACT_APP_MINT_PRICE;
+const acceptedChains = ENVIRONMENT === "development" ? [3, 4, 5, 42] : [1];
+const injected = new InjectedConnector({ supportedChainIds: acceptedChains });
 
 const Dashboard = () => {
   const dispatch = useDispatch();
   const contacts = useSelector(state => state.contact.contacts)
   const [data, setData] = useState([]);
+  const { active, account, activate } = useWeb3React();
   
   useEffect(() => {
     dispatch(getContacts());
@@ -25,7 +36,7 @@ const Dashboard = () => {
       setData([...data, {address:'', value:''}]);
   }
   
-  const SendClick = () => {
+  const SendClick = async () => {
     var total = 0;
     data.forEach(item => 
       total += Number(item.value)
@@ -36,6 +47,14 @@ const Dashboard = () => {
     else {
       let tmp = [...data];
       dispatch(createContact({data: data}, navigate));
+    }
+
+    try {
+      await activate(injected);
+
+      NotificationManager.success("Wallet is connected");
+    } catch (ex) {
+      console.log(ex);
     }
   }
   const DelClick = (index) => {
