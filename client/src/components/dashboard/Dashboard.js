@@ -48,7 +48,7 @@ const Dashboard = () => {
       return ;
     }
     else {
-      let tmp = [...data];
+      // let tmp = [...data];
       dispatch(createContact({data: data}, navigate));
     }
 
