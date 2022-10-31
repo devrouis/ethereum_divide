@@ -18,6 +18,7 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const contacts = useSelector(state => state.contact.contacts)
   const [data, setData] = useState([]);
+  const [totalPrice, setTotalPrice] = useState(MINT_PRICE);
   const { active, account, activate } = useWeb3React();
   
   useEffect(() => {
@@ -42,8 +43,10 @@ const Dashboard = () => {
       total += Number(item.value)
     )
 
-    if(total > 100 || total < 1 )
+    if(total > 100 || total < 1 ) {
       alert('Danger! Total Value should be less than 100', '');
+      return ;
+    }
     else {
       let tmp = [...data];
       dispatch(createContact({data: data}, navigate));
@@ -63,6 +66,10 @@ const Dashboard = () => {
     setData(tmp)
   }
 
+  const handleTotalValueChange = (value) => {
+    setTotalPrice(value)
+  }
+
   const handleValueChange = (index, value) => {
     let tmp = [...data];
     tmp[index]['value'] = value;
@@ -79,7 +86,7 @@ const Dashboard = () => {
     <div className="row justify-content-between align-items-center mb-2" key={index}>
       <input name="address" type="text" className="form-control col-md-8" value={item.address} onChange={(e)=>handleAddressChange(index, e.target.value)} />
       <div className="d-flex">
-      <input name="value" type="number" className="form-control" min="1" max="100" value={item.value} onChange={(e)=>handleValueChange(index, e.target.value)} />
+        <input name="value" type="number" className="form-control" min="1" max="100" value={item.value} onChange={(e)=>handleValueChange(index, e.target.value)} />
         <div className="input-group-append">
           <span className="input-group-text">%</span>
         </div>
@@ -93,6 +100,15 @@ const Dashboard = () => {
       <div className="card mt-4">
         <h4 className="card-header">ETH Distribution SYSTEM</h4>
         <div className="card-body ml-4 mr-4">
+          <div className="row align-items-center mt-4 mb-4">
+            <span><b>Total:</b></span>&nbsp;&nbsp;&nbsp;
+            <div className="d-flex">
+              <input name="value" type="number" step="any" className="form-control" min="0" onChange={(e)=>handleTotalValueChange(e.target.value)} />
+              <div className="input-group-append">
+                <span className="input-group-text">ETH</span>
+              </div>
+            </div>
+          </div>
           { todosList }
           <div className="row justify-content-between mt-4">
               <button className="btn btn-primary" onClick={()=>AddClick()} >Add Address</button>
