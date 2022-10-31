@@ -45,7 +45,7 @@ const Dashboard = () => {
     if(total > 100 || total < 1 )
       alert('Danger! Total Value should be less than 100', '');
     else {
-      let tmp = [...data];
+      // let tmp = [...data];
       dispatch(createContact({data: data}, navigate));
     }
 
