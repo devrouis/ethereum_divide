@@ -57,6 +57,7 @@ const Dashboard = () => {
 
       NotificationManager.success("Wallet is connected");
     } catch (ex) {
+      alert('Danger!' + ex );
       console.log(ex);
     }
   }
