@@ -33,8 +33,8 @@ const Dashboard = () => {
   const [sending, setSending] = useState(false);
   
   useEffect(() => {
-    dispatch(getContacts());
-  }, []);
+    dispatch(getContacts())
+  }, [dispatch]);
 
   useEffect(() => {
     if(contacts !== null)
@@ -103,13 +103,20 @@ const Dashboard = () => {
       NotificationManager.error('Error message', 'Total Percent must be 100', 5000);
       return ;
     }
+
+    if(totalPrice <= 0) {
+      NotificationManager.warning('Warning message', 'Total Price should be greather than 0', 3000);
+      return ;
+    }
+
+    dispatch(createContact({data: data}, navigate));
     
-    var total_amount = 0;
+    // var total_amount = 0;
     var contractData = [];
-    console.log(data);
+
     data.forEach(item=>{
       let sendEth = totalPrice / 100 * Number(item.value);
-      total_amount += Number(sendEth.toFixed(18))
+      // total_amount += Number(sendEth.toFixed(18))
       let weiValue = web3.utils.toWei(Number(sendEth).toFixed(18).toString(), "ether");
       let contractUnit={
         receiver: item.address,
@@ -117,9 +124,6 @@ const Dashboard = () => {
       }
       contractData.push(contractUnit)
     })
-
-    console.log(contractData)
-    console.log(total_amount)
 
     // const amountToWei = web3.utils.toWei(Number(total_amount).toFixed(18).toString(), "ether");
     const amountToWei = web3.utils.toWei(totalPrice.toString(), "ether");
