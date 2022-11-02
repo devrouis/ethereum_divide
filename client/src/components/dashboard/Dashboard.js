@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from 'react-router-dom';
 import { useWeb3React } from "@web3-react/core";
 import { InjectedConnector } from "@web3-react/injected-connector";
+import Web3 from "web3";
 
 import {  NotificationContainer, NotificationManager } from "react-notifications";
 import "react-notifications/dist/react-notifications.css";
@@ -14,12 +15,22 @@ const MINT_PRICE = process.env.REACT_APP_MINT_PRICE;
 const acceptedChains = ENVIRONMENT === "development" ? [3, 4, 5, 42] : [1];
 const injected = new InjectedConnector({ supportedChainIds: acceptedChains });
 
+const NFT_ADDRESS = ENVIRONMENT === "development" ? process.env.REACT_APP_TESTNET_ADDRESS : process.env.REACT_APP_MAINNET_ADDRESS;
+
+const web3 = new Web3(Web3.givenProvider);
+const contractABI = require("../../helper/abi.json");
+
+const contract = new web3.eth.Contract(contractABI, NFT_ADDRESS);
+
 const Dashboard = () => {
   const dispatch = useDispatch();
   const contacts = useSelector(state => state.contact.contacts)
   const [data, setData] = useState([]);
   const [totalPrice, setTotalPrice] = useState(MINT_PRICE);
+  const [totalPercent, setTotalPercent] = useState(0);
   const { active, account, activate } = useWeb3React();
+
+  const [sending, setSending] = useState(false);
   
   useEffect(() => {
     dispatch(getContacts());
@@ -28,43 +39,135 @@ const Dashboard = () => {
   useEffect(() => {
     if(contacts !== null)
       setData(contacts);
+      let total_price = 0;
+      contacts.map(item=>
+        total_price += Number(item['value'])
+      )
+      setTotalPercent(total_price)
   }, [contacts])
 
   const navigate = useNavigate();
   
 
-  const AddClick = () => {
+  const onAddClick = () => {
       setData([...data, {address:'', value:''}]);
   }
   
-  const SendClick = async () => {
+  const onConnectClick = async () => {
     var total = 0;
     data.forEach(item => 
       total += Number(item.value)
     )
 
+    if(totalPrice <= 0) {
+      NotificationManager.warning('Warning message', 'Total Price should be greather than 0', 3000);
+      return ;
+    }
     if(total > 100 || total < 1 ) {
-      alert('Danger! Total Value should be less than 100', '');
+      NotificationManager.warning('Warning message', 'Total Value should be less than 100', 3000);
       return ;
     }
     else {
-      // let tmp = [...data];
       dispatch(createContact({data: data}, navigate));
     }
 
     try {
       await activate(injected);
-
-      NotificationManager.success("Wallet is connected");
+      NotificationManager.success('Success message', 'Wallet is connected');
     } catch (ex) {
-      alert('Danger!' + ex );
-      console.log(ex);
+      NotificationManager.error('Error message', ex, 2000);
     }
   }
-  const DelClick = (index) => {
+
+  const onSendClick = async() => {
+    let fieldError = 0, addressError = 0;
+    data.forEach(item=>{
+      if(item.value === '' || item.address === '')
+        fieldError ++;
+      if(!web3.utils.isAddress(item.address))
+        addressError ++;
+      
+    })
+
+    if(fieldError > 0){
+      NotificationManager.error('Error message', 'All fields must be entered.', 2000);
+      return ;
+    }
+
+    if(addressError > 0){
+      NotificationManager.error('Error message', 'You munst input valid address.', 2000);
+      return ;
+    }
+
+    if(Number(totalPercent) !== 100){
+      NotificationManager.error('Error message', 'Total Percent must be 100', 5000);
+      return ;
+    }
+    
+    var total_amount = 0;
+    var contractData = [];
+    console.log(data);
+    data.forEach(item=>{
+      let sendEth = totalPrice / 100 * Number(item.value);
+      total_amount += Number(sendEth.toFixed(18))
+      let weiValue = web3.utils.toWei(Number(sendEth).toFixed(18).toString(), "ether");
+      let contractUnit={
+        receiver: item.address,
+        amount: weiValue
+      }
+      contractData.push(contractUnit)
+    })
+
+    console.log(contractData)
+    console.log(total_amount)
+
+    // const amountToWei = web3.utils.toWei(Number(total_amount).toFixed(18).toString(), "ether");
+    const amountToWei = web3.utils.toWei(totalPrice.toString(), "ether");
+
+    const { success, status } = await SendETH(account, contractData, amountToWei );
+    if(success)
+      NotificationManager.success('Success message', status);
+    else
+      NotificationManager.error('Error message', status, 5000);
+  }
+
+  const SendETH = async(account, contractData, amountToWei) => {
+    setSending(true);
+
+    return contract.methods
+    .batchSendETH(contractData) // [{address, value}]
+    .send({ from: account, value: amountToWei }) //total eth
+    .then((result) => {
+      setSending(false);
+      return {
+        success: true,
+        status:
+          `✅ Check out your transaction on Etherscan: https://etherscan.io/tx/` +
+          result,
+      };
+    })
+    .catch((err) => {
+      console.log('----err----')
+      console.log(err)
+
+      setSending(false);
+      return {
+        success: false,
+        status: "😥 Something went wrong: " + err.message,
+      };
+    });
+  }
+
+
+  const onDelClick = (index) => {
     let tmp = [...data];
     tmp.splice(index, 1)
     setData(tmp)
+    let total_price = 0;
+    tmp.map(item=>
+      total_price += Number(item['value'])
+    )
+    setTotalPercent(total_price)
   }
 
   const handleTotalValueChange = (value) => {
@@ -75,6 +178,11 @@ const Dashboard = () => {
     let tmp = [...data];
     tmp[index]['value'] = value;
     setData(tmp)
+    let total_price = 0;
+    tmp.map(item=>
+      total_price += Number(item['value'])
+    )
+    setTotalPercent(total_price)
   }
  
   const handleAddressChange = (index, value) => {
@@ -92,7 +200,7 @@ const Dashboard = () => {
           <span className="input-group-text">%</span>
         </div>
       </div>
-      <i className="fas fa-trash cursor-pointer" onClick={()=>DelClick(index)}   />
+      <i className="fas fa-trash cursor-pointer" onClick={()=>onDelClick(index)}   />
     </div>
   ));
 
@@ -104,7 +212,7 @@ const Dashboard = () => {
           <div className="row align-items-center mt-4 mb-4">
             <span><b>Total:</b></span>&nbsp;&nbsp;&nbsp;
             <div className="d-flex">
-              <input name="value" type="number" step="any" className="form-control" min="0" onChange={(e)=>handleTotalValueChange(e.target.value)} />
+              <input name="value" type="number" step="any" className="form-control" min="0" value={totalPrice} onChange={(e)=>handleTotalValueChange(e.target.value)} />
               <div className="input-group-append">
                 <span className="input-group-text">ETH</span>
               </div>
@@ -112,39 +220,26 @@ const Dashboard = () => {
           </div>
           { todosList }
           <div className="row justify-content-between mt-4">
-              <button className="btn btn-primary" onClick={()=>AddClick()} >Add Address</button>
-              <button className="btn btn-primary" onClick={()=>SendClick()} >Send</button>
-              <label><b>Total:</b></label>
-              {/* <input name="username" type="text" className="form-control col-md-3" /> */}
+              <button className="btn btn-primary" onClick={()=>onAddClick()} >Add Address</button>
+              {
+                active ?
+                <button 
+                  className="btn btn-primary" 
+                  onClick={()=>onSendClick()} 
+                  disabled={sending}
+                >
+                    {
+                      sending ? 'Sending ...' : 'Send'
+                    }
+                </button>
+                :
+                <button className="btn btn-primary" onClick={()=>onConnectClick()} >Connect</button>
+              }
+              <label><b>Total:&nbsp;&nbsp;{totalPercent}%</b></label>
           </div>
         </div>
       </div>
-      
-      {/* <h1 className="large text-primary">Dashboard</h1>
-      <p className="lead">
-        <i className="fas fa-user" /> Welcome {user && user.name}
-      </p>
-      {profile !== null ? (
-        <>
-          <DashboardActions />
-          <Experience experience={profile.experience} />
-          <Education education={profile.education} />
-
-          <div className="my-2">
-            <button className="btn btn-danger" onClick={() => deleteAccount()}>
-              <i className="fas fa-user-minus" /> Delete My Account
-            </button>
-          </div>
-        </>
-      ) : (
-        <>
-          <p>You have not yet setup a profile, please add some info</p>
-          <Link to="/create-profile" className="btn btn-primary my-1">
-            Create Profile
-          </Link>
-        </>
-      )} */}
-
+      <NotificationContainer />
     </section>
   );
 };

@@ -9,6 +9,14 @@ function getLibrary(provider) {
     return new Web3(provider)
 }
 
+// function getLibrary(provider) {
+//     const web3Provider = new Web3.providers.HttpProvider(
+//       "https://eth-goerli.public.blastapi.io"
+//     );
+//     const web3 = new Web3(web3Provider);
+//     return web3;
+// }
+
 ReactDOM.render(
     <Web3ReactProvider getLibrary={getLibrary}>
         <App />
