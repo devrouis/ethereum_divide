@@ -43,7 +43,7 @@ export const createContact = (data, navigate, edit = false) =>
       });
 
       dispatch(
-        setAlert('Contact Saved', 'success')
+        setAlert('Delivery is Saved', 'success')
       );
 
       if (!edit) {
