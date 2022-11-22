@@ -9,9 +9,9 @@ const Contact = require('../../models/Contact');
 // @route    GET api/contact
 // @desc     Get all contacts
 // @access   Public
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
     try {
-      const contacts = await Contact.find();
+      const contacts = await Contact.find({ user: req.user.id });
       res.json(contacts);
     } catch (err) {
       console.error(err.message);
@@ -30,7 +30,6 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    console.log(req.body);
     // destructure the request
     const { data } = req.body;
 

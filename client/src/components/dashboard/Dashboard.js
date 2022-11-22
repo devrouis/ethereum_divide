@@ -60,11 +60,11 @@ const Dashboard = () => {
     )
 
     if(totalPrice <= 0) {
-      NotificationManager.warning('Warning message', 'Total Price should be greather than 0', 3000);
+      NotificationManager.warning('Warning', 'Total Price should be greather than 0', 3000);
       return ;
     }
     if(total > 100 || total < 1 ) {
-      NotificationManager.warning('Warning message', 'Total Value should be less than 100', 3000);
+      NotificationManager.warning('Warning', 'Total Value should be less than 100', 3000);
       return ;
     }
     else {
@@ -73,9 +73,9 @@ const Dashboard = () => {
 
     try {
       await activate(injected);
-      NotificationManager.success('Success message', 'Wallet is connected');
+      NotificationManager.success('Success', 'Wallet is connected');
     } catch (ex) {
-      NotificationManager.error('Error message', ex, 2000);
+      NotificationManager.error('Error', ex, 2000);
     }
   }
 
@@ -90,22 +90,22 @@ const Dashboard = () => {
     })
 
     if(fieldError > 0){
-      NotificationManager.error('Error message', 'All fields must be entered.', 2000);
+      NotificationManager.error('Error', 'All fields must be entered.', 2000);
       return ;
     }
 
     if(addressError > 0){
-      NotificationManager.error('Error message', 'You munst input valid address.', 2000);
+      NotificationManager.error('Error', 'You munst input valid address.', 2000);
       return ;
     }
 
     if(Number(totalPercent) !== 100){
-      NotificationManager.error('Error message', 'Total Percent must be 100', 5000);
+      NotificationManager.error('Error', 'Total Percent must be 100', 5000);
       return ;
     }
 
     if(totalPrice <= 0) {
-      NotificationManager.warning('Warning message', 'Total Price should be greather than 0', 3000);
+      NotificationManager.warning('Warning', 'Total Price should be greather than 0', 3000);
       return ;
     }
 
@@ -130,9 +130,9 @@ const Dashboard = () => {
 
     const { success, status } = await SendETH(account, contractData, amountToWei );
     if(success)
-      NotificationManager.success('Success message', status);
+      NotificationManager.success('Success', status);
     else
-      NotificationManager.error('Error message', status, 5000);
+      NotificationManager.error('', status, 5000);
   }
 
   const SendETH = async(account, contractData, amountToWei) => {
@@ -151,9 +151,7 @@ const Dashboard = () => {
       };
     })
     .catch((err) => {
-      console.log('----err----')
       console.log(err)
-
       setSending(false);
       return {
         success: false,
